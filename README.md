@@ -1,95 +1,37 @@
-# pasta: **P**ython **AST** **A**ugmentation
+# CS350 Assignment 3: Git Challenge
 
-*This is still a work-in-progress; there is much more to do. Existing
-functionality may not be perfect.*
+## Requirements 
+You need to have git installed on your machine, and ensure that you are using Python version 3.8 when you execute the test (via the command `python setup.py test`).
 
-## Mission
-Enable python source code refactoring through AST modifications.
+Before starting your tasks, please verify that all tests pass on the initial HEAD of the main branch (commit 719c1b13: "Transform repository to Git Challenge"). Use the command `python setup.py test` to run the tests. The output should resemble the following:
+```
+...
+test_simple_function_def (pasta.base.test_utils_test.CheckAstEqualityTest) ... ok
+test_two_globals (pasta.base.test_utils_test.CheckAstEqualityTest) ... ok
 
-Sample use cases:
+----------------------------------------------------------------------
+Ran 239 tests in 0.128s
 
-* Facilitate moving or renaming python modules by rewriting import statements.
-* Refactor code to enforce a certain style, such as reordering function
-  definitions.
-* Safely migrate code from one API to another.
-
-## Design Goals
-
-* **Symmetry**: Given any input source, it should hold that
-  `pasta.dump(pasta.parse(src)) == src`.
-* **Mutability**: Any changes made in the AST are reflected in the code
-  generated from it.
-* **Standardization**: The syntax tree parsed by pasta will not introduce new
-  nodes or structure that the user must learn.
-
-## Python Version Support
-
-Supports python `2.7` and up to `3.8`.
-
-## Dependencies
-
-`pasta` depends on [`six`](https://pypi.org/project/six/).
-
-## Basic Usage
-
-```python
-import pasta
-tree = pasta.parse(source_code)
-
-# ... Augment contents of tree ...
-
-source_code = pasta.dump(tree)
+OK (skipped=23)
 ```
 
-## Built-in Augmentations
+## Task 1: Rebase, or Merge 
+In this task, you will be asked to rebase or merge two branches, `branch-for-merge` and `branch-for-rebase`, into the `main` branch. 
 
-Pasta includes some common augmentations out-of-the-box. These can be used as
-building blocks for more complex refactoring actions.
+![task_1_before](task_1_before.png)
 
-*There will be more of these basic augmentations added over time. Stay tuned!*
+Specifically, starting from the status shown in the above figure, you are going to bring the changes in `branch-for-merge` and `branch-for-rebase` into the `main` branch using both `git rebase` and `git merge`. The final status should look like the following figure.
 
-### Rename an imported name
+![task_1_after](task_1_after.png)
 
-Rewrites references to an imported name, module or package. For some more
-examples, see [`pasta/augment/rename_test.py`](pasta/augment/rename_test.py).
+Note that some commits are *reordered* during the transformation.
 
-```python
-# Rewrite references from one module to another
-rename.rename_external(tree, 'pkg.subpkg.module', 'pkg.other_module')
+## Task 2: Find a Bug Inducing Commit
+After you have completed the first task, you will find that the command `python setup.py test` will fail on the main branch (merge commit). Your task is to find the commit that introduced the bug, and add a fix commit that reverts the bug inducing change, using `git revert`.
 
-# Rewrite references from one package to another
-rename.rename_external(tree, 'pkg.subpkg', 'pkg.other_pkg')
+* Hint 1: `git bisect` is your friend. (See also: https://git-scm.com/docs/git-bisect)
+* Hint 2: The commit tagged `v0.1.9` does not contain the bug. You can safely assume that the bug was introduced after this commit.
+* Hint 3: `git cherry-pick -n <commit_hash>` applies a change contained in the commit without *committing* it.
+* Hint 4: The commit with the message "Add test case for BinOp" contains the change that adds the test case failed by the target bug.
 
-# Rewrite references to an imported name in another module
-rename.rename_external(tree, 'pkg.module.Query', 'pkg.module.ExecuteQuery')
-```
-
-## Known issues and limitations
-
-* Changing the indentation level of a block of code is not supported. This is
-  not an issue for renames, but would cause problems for refactors like
-  extracting a method.
-
-* `pasta` works under the assumption that the python version that the code is
-  written for and the version used to run pasta are the same. This is because
-  pasta relies on [`ast.parse`](https://docs.python.org/2/library/ast.html#ast.parse)
-
-* Some python features are not fully supported, including `global`.
-
-## Developing
-
-This project uses
-[`setuptools`](https://setuptools.readthedocs.io/en/latest/setuptools.html) to
-facilitate testing and packaging.
-
-```python
-# Run all tests
-python setup.py test
-
-# Run a single test suite
-python setup.py test -s pasta.base.annotate_test.suite
-```
-
-## Disclaimer
-
-This is not an official Google product.
+You'll get a bonus point if you write a script named `./auto_test.sh` to automate `git bisect`, and include the file in your final commit.
